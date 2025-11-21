@@ -1,0 +1,92 @@
+---
+title: "assighmentE"
+author: "YunBo Zhang"
+date: "2025-09-30"
+output: html_document
+---
+
+```{r }
+library(readr)
+library(tidyverse)
+library(tidyr)
+data_clean <- read_csv("C:/Users/Cikey/Desktop/data/WDBD.csv", n_max = 2977)#remove the introduction in the bottle
+data_long <- data_clean %>%
+  pivot_longer( 
+    cols = `2018 [YR2018]`:`2024 [YR2024]`,  
+    names_to = "Year",                      
+    values_to = "Value"                     
+  )
+data_long <- data_long %>%
+  mutate(
+    Year = gsub(" \\[YR[0-9]+\\]", "", Year)  
+  )#Use pivot_longer() to gather year columns into a single Year column and change the value into real year value.
+data_wide <- data_long %>%
+  pivot_wider(
+    names_from = `Series Name`,  
+    values_from = Value         
+  )
+data_wide#Use pivot_widerrestructure Series Names to see the effect.
+
+#At the bottom of the dataset, there were two metadata rows: one for indicator names and one for units of measurement.We extracted these rows, reshaped them into long format, and merged them back into the main dataset.e did not standardize units, but we kept them in a separate Unit column for clarity.
+```
+
+
+```{r }
+library(tidyverse)
+movies <- read.csv("C:/Users/Cikey/Desktop/data/movies.csv", stringsAsFactors = FALSE)
+head(movies)
+movies_long <- movies %>% #separate the mixed information in genre and years in title
+  separate_rows(genres, sep = "\\|")
+head(movies_long)
+movies_clean <- movies_long %>%
+  separate(title, into = c("title_name", "year"), sep = " \\(", remove = TRUE) %>%
+  mutate(year = str_replace(year, "\\)", ""))
+head(movies_clean)
+movies_clean <- movies_clean %>%# some movie lose the information of genre,create a type call"unknown"for them
+mutate(genres = ifelse(genres == "(no genres listed)", "Unknown", genres))
+head(movies_clean)
+```
+
+
+```{r }
+library(tidyverse)
+links <- read.csv("C:/Users/Cikey/Desktop/data/links.csv", stringsAsFactors = FALSE)
+ratings <- read.csv("C:/Users/Cikey/Desktop/data/ratings.csv", stringsAsFactors = FALSE)
+str(links)
+head(links)
+str(ratings)
+head(ratings)
+movie_summary <- ratings %>% #Compute the average rating and number of ratings per movie.
+  group_by(movieId) %>%
+  summarise(
+    avg_rating = mean(rating, na.rm = TRUE),
+    num_ratings = n()
+  ) %>%
+  arrange(desc(num_ratings))
+head(movie_summary)
+ggplot(ratings, aes(x = rating)) +
+  geom_histogram(binwidth = 0.5, color = "black", fill = "blue") +
+  labs(title = "Distribution of Movie Ratings",
+       x = "Rating",
+       y = "Number of Ratings")# Explore the distribution of ratings across all users
+ratings <- ratings %>%
+  mutate(date = as.POSIXct(timestamp, origin = "1970-01-01"))
+ratings <- ratings %>%
+  mutate(year_month = format(date, "%Y-%m"))
+monthly_trend <- ratings %>%
+  group_by(year_month) %>%
+  summarise(avg_rating = mean(rating))
+ggplot(monthly_trend, aes(x = as.Date(paste0(year_month, "-01")), y = avg_rating)) +
+  geom_line(color = "darkblue") +
+  labs(title = "Average Rating Trend Over Time",
+       x = "Year-Month",
+       y = "Average Rating")#Convert timestamp into readable dates and analyze trends over time
+
+
+
+
+
+
+
+```
+
